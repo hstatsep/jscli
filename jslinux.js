@@ -660,6 +660,8 @@ document.querySelector('#paste-btn').addEventListener('click', async function(){
     
     // Call the terminal's pasteHandler with the event
     term.pasteHandler(clipboardEvent);
+
+    this.blur();
 })
 
 // add COPY functionality
@@ -673,10 +675,12 @@ document.querySelector('#copy-btn').addEventListener('click', async function () 
             await navigator.clipboard.writeText(selectedText);
             console.log('Copied to clipboard:', selectedText);
             alert('Selected content copied to clipboard!');
+            
         } else {
             alert('No text is selected to copy.');
         }
     } catch (err) {
         console.error('Failed to copy selected text:', err);
     }
+    this.blur();
 });

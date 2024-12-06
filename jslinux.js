@@ -524,13 +524,19 @@ function start_vm(user, pwd)
     /* read the parameters */
 
     params = get_params();
-    cpu = params["cpu"] || "riscv64";
+    cpu = params["cpu"] || "x86";
     url = params["url"];
     if (!url) {
-        if (cpu == "x86")
-            url = "root-x86.cfg";
-        else
+        // if (cpu == "x86")
+        //     url = "root-x86.cfg";
+        // else
+        //     url = "root-riscv64.cfg";
+
+        // MUELLER making x86 the default CPU
+        if (cpu == "v64")
             url = "root-riscv64.cfg";
+        else
+            url = "root-x86.cfg";
     }
     url = get_absolute_url(url);
     mem_size = (params["mem"] | 0) || 128; /* in mb */

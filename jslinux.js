@@ -644,3 +644,20 @@ function on_login()
         start_vm(null, null);
     }
 })();
+
+// MUELLER code
+
+// add PASTE functionality
+document.querySelector('button').addEventListener('click', async function(){
+    // Use the Clipboard API to read the clipboard content
+    const clipboardText = await navigator.clipboard.readText();
+                    
+    // Create a synthetic ClipboardEvent with the clipboard text
+    const clipboardEvent = new ClipboardEvent('paste', {
+        clipboardData: new DataTransfer()
+    });
+    clipboardEvent.clipboardData.setData('text/plain', clipboardText);
+    
+    // Call the terminal's pasteHandler with the event
+    term.pasteHandler(clipboardEvent);
+})

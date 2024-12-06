@@ -51,7 +51,7 @@ function Term(width, height, handler, tot_height)
         "#aa0000",
         "#00aa00",
         "#aa5500",
-        "#0000aa",
+        "#0000aa", // changing 0000aa to 00aaaa
         "#aa00aa",
         "#00aaaa",
         "#aaaaaa",
@@ -280,6 +280,10 @@ Term.prototype.refresh = function(ymin, ymax)
                         outline += '<span style="';
                         fg = (attr >> 4) & 0xf;
                         bg = attr & 0xf;
+
+                        // MUELLER debugging
+                        console.log('Foreground color index:', fg, 'Color:', this.colors[fg]);
+
                         bold = (attr >> 8) & 1;
                         inverse = (attr >> 9) & 1;
                         if (inverse) {
@@ -1223,10 +1227,11 @@ Term.prototype.pasteHandler = function (ev)
     }
 }
 
+// MUELLER turning this off to override with own button
 Term.prototype.textAreaReset = function(ev)
 {
     /* reset text */
-    this.textarea_el.value = "Paste Here";
+    // this.textarea_el.value = "Paste Here";
 }
 
 /* output queue to send back asynchronous responses */

@@ -648,7 +648,7 @@ function on_login()
 // MUELLER code
 
 // add PASTE functionality
-document.querySelector('button').addEventListener('click', async function(){
+document.querySelector('#paste-btn').addEventListener('click', async function(){
     // Use the Clipboard API to read the clipboard content
     const clipboardText = await navigator.clipboard.readText();
                     
@@ -661,3 +661,22 @@ document.querySelector('button').addEventListener('click', async function(){
     // Call the terminal's pasteHandler with the event
     term.pasteHandler(clipboardEvent);
 })
+
+// add COPY functionality
+document.querySelector('#copy-btn').addEventListener('click', async function () {
+    try {
+        // Get the highlighted (selected) text
+        const selectedText = window.getSelection().toString();
+
+        if (selectedText) {
+            // Use Clipboard API to write the selected text to the clipboard
+            await navigator.clipboard.writeText(selectedText);
+            console.log('Copied to clipboard:', selectedText);
+            alert('Selected content copied to clipboard!');
+        } else {
+            alert('No text is selected to copy.');
+        }
+    } catch (err) {
+        console.error('Failed to copy selected text:', err);
+    }
+});

@@ -60,10 +60,10 @@ function Term(width, height, handler, tot_height)
         "#ff5555",
         "#55ff55",
         "#ffff55",
-        "#5555ff",
+        "#00FFFF", // changing 5555ff (dark blue) to 00FFFF (cyan)
         "#ff55ff",
         "#55ffff",
-        "#ffffff" 
+        "#ffffff"
     ];
     /* attributes bits:
        0-3: bg

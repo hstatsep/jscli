@@ -85,6 +85,13 @@ function Term(width, height, handler, tot_height)
     this.application_keypad = false;
     /* if true, emulate some behaviors of the Linux console */
     this.linux_console = true;
+
+    // --- Custom extensions ---
+    this.output_log = []; // recent terminal output
+    this.output_log_max = 5000; // maximum number of lines to keep
+    this.input_line = ""; // stores current typed input
+    // --- end: Custom extensions ---
+
 }
 
 Term.prototype.open = function(parent_el, textarea_el)
@@ -400,6 +407,22 @@ Term.prototype.scroll_disp = function(n)
 
 Term.prototype.write = function(str)
 {
+    // --- capture output for :copyhistory --- 
+    if (str) {
+        let clean = str.replace(/\r/g, "");       // remove carriage returns
+        let lines = clean.split("\n");            // split into lines
+        for (let i = 0; i < lines.length; i++) {
+            this.output_log.push(lines[i]);       // append to output buffer
+        }
+        // keep buffer within max size
+        if (this.output_log.length > this.output_log_max) {
+            this.output_log.splice(
+                0,
+                this.output_log.length - this.output_log_max
+            );
+        }
+    }
+    // --- end: Caputr output for copyhistory --- 
     var s, ymin, ymax;
     
     function update(y) 
@@ -974,7 +997,16 @@ Term.prototype.keyDownHandler = function (ev)
         str = "\x09";
         break;
     case 13: /* enter */
-        str = "\x0d";
+        var cmd = this.input_line.trim();  // get the typed command
+        this.input_line = "";              // clear input buffer
+
+        if (cmd === ":copyhistory") {
+            this.copyHistory();            // call copy function
+            this.writeln("[history copied to clipboard]"); // feedback
+            return false;                  // do not send to Linux (we'll take this)
+        }
+
+        str = "\x0d";                      // normal Enter for other commands
         break;
     case 27: /* escape */
         str = "\x1b";
@@ -1154,11 +1186,15 @@ Term.prototype.keyPressHandler = function (ev)
         this.show_cursor();
         if (this.utf8)
             str = this.to_utf8(str);
+
+        // --- track typed input ---
+        this.input_line += str;
+
         this.handler(str);
         return false;
-    } else {
-        return true;
+        // --- end: Track typed input ---
     }
+
 };
 
 Term.prototype.blurHandler = function (ev)
@@ -1254,3 +1290,21 @@ Term.prototype.getSize = function ()
 {
     return [this.w, this.h];
 };
+
+// --- Copy history method ---
+Term.prototype.copyHistory = function ()
+{
+    // Filter lines that look like bash history entries (e.g., "  12  ls -la")
+    var historyLines = this.output_log.filter(function (line) {
+        return /^\s*\d+\s+/.test(line);
+    });
+
+    // Join lines into a single string
+    var text = historyLines.join("\n");
+
+    // Copy to clipboard using modern API
+    navigator.clipboard.writeText(text).catch(function (err) {
+        console.error("Clipboard copy failed:", err);
+    });
+};
+// --- end: Copy history method ---

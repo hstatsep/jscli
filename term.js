@@ -997,16 +997,24 @@ Term.prototype.keyDownHandler = function (ev)
         str = "\x09";
         break;
     case 13: /* enter */
-        var cmd = this.input_line.trim();  // get the typed command
+        // Improved checking to always show [History copied to clipboard]
+        var cmd = this.input_line.replace(/\s+/g, " ").trim();  // get the typed command
         this.input_line = "";              // clear input buffer
 
         if (cmd === ":copyhistory") {
-            this.copyHistory();            // call copy function
+            this.copyHistory(); // call copy method
+            this.writeln(""); // Make new line so feedback is more clear
             this.writeln("[history copied to clipboard]"); // feedback
-            return false;                  // do not send to Linux (we'll take this)
+            
+            // Change: DO NOT send anything to the shell
+            // Made it stricter
+            this.input_line = "";
+            this.key_rep_state = 0;
+            return false;
         }
 
-        str = "\x0d";                      // normal Enter for other commands
+        this.input_line = ""; // Make sure the input is completely clear
+        str = "\x0d"; // normal Enter for other commands
         break;
     case 27: /* escape */
         str = "\x1b";
@@ -1292,19 +1300,51 @@ Term.prototype.getSize = function ()
 };
 
 // --- Copy history method ---
-Term.prototype.copyHistory = function ()
-{
-    // Filter lines that look like bash history entries (e.g., "  12  ls -la")
-    var historyLines = this.output_log.filter(function (line) {
-        return /^\s*\d+\s+/.test(line);
-    });
+// change: copy only the most recent history block)
+Term.prototype.copyHistory = function () {
+    var historyRegex = /^\s*\d+\s+/;
+    var i = this.output_log.length - 1;
+    var block = [];
 
-    // Join lines into a single string
-    var text = historyLines.join("\n");
+    // Walk backward collecting contiguous lines that look like history entries.
+    for (; i >= 0; i--) {
+        var line = this.output_log[i];
 
-    // Copy to clipboard using modern API
+        if (historyRegex.test(line)) {
+            block.push(line);
+            continue;
+        }
+
+        // ignore prompts and empty lines
+        if (line.trim() === "" || line.startsWith("/")) {
+            continue;
+        }
+
+        // stop once we've collected history and hit real output
+        if (block.length) break;
+    }
+
+
+    // If nothing contiguous found, go back to copying all matching lines
+    if (block.length === 0) {
+        block = this.output_log.filter(function (l) { return historyRegex.test(l); });
+    } else {
+        // we walked backwards, so reverse to restore original order
+        block.reverse();
+    }
+
+    var text = block.join("\n");
+
+    // Copy to clipboard using modern API (same as before but with error checking)
+    if (!text) {
+        // nothing to copy — optional: give feedback
+        console.warn("No history lines found to copy.");
+        return;
+    }
+
     navigator.clipboard.writeText(text).catch(function (err) {
         console.error("Clipboard copy failed:", err);
     });
 };
 // --- end: Copy history method ---
+
